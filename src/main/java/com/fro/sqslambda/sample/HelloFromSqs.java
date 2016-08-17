@@ -2,6 +2,8 @@ package com.fro.sqslambda.sample;
 
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.lambda.AWSLambdaClient;
+import com.amazonaws.services.lambda.invoke.LambdaInvokerFactory;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
@@ -19,6 +21,8 @@ public class HelloFromSqs {
 
     private static final String QUEUE_URL = "https://sqs.eu-central-1.amazonaws.com/921516662737/sqs-lambda-fro-hello-queue";
 
+    private static final int MAX_NUMBER_OF_MESSAGES = 1;
+
     public String myHandler(String word, Context context) {
 
         AmazonSQS sqs = new AmazonSQSClient();
@@ -27,6 +31,7 @@ public class HelloFromSqs {
 
         ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
         receiveMessageRequest.setQueueUrl(QUEUE_URL);
+        receiveMessageRequest.setMaxNumberOfMessages(MAX_NUMBER_OF_MESSAGES);
 
         logger.info("Receiving messages on queue [" + QUEUE_URL + "]");
         ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
@@ -36,8 +41,17 @@ public class HelloFromSqs {
 
         for (Message message : messages) {
             logger.info("Message [" + message.getMessageId() + "] : " + message.getBody());
+            invokeLambdaWorker(message);
         }
 
         return "DONE " + word;
+    }
+
+    protected void invokeLambdaWorker(Message message) {
+        AWSLambdaClient lambda = new AWSLambdaClient();
+        lambda.configureRegion(Regions.EU_CENTRAL_1);
+
+        ExactTargetService exactTargetService = LambdaInvokerFactory.build(ExactTargetService.class,lambda);
+        exactTargetService.sendCommunication(message);
     }
 }
