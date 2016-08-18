@@ -8,12 +8,8 @@ import org.slf4j.LoggerFactory;
 
 public class HelloWorkerLambda {
 
-    private static final Logger logger = LoggerFactory.getLogger(HelloWorkerLambda.class);
-
     public void myHandler(Message message, Context context) {
-        logger.info("Processing message [" + message.getBody() + "]");
-
         LambdaLogger lambdaLogger = context.getLogger();
-        lambdaLogger.log("Processing message [" + message.getBody() + "]\n");
+        lambdaLogger.log("Processing message [" + message.getBody() + "] from lambda\n");
     }
 }
